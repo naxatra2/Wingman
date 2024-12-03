@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from 'react'; // Include necessary hooks
-import { useSelector, useDispatch } from 'react-redux'; // Correct import for Redux hooks
-import { fetchProducts } from './features/productsSlice'; // Import your action
-import SearchBar from './components/SearchBar'; // Search bar component
-import SortBar from './components/SortBar'; // Sorting component
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchProducts } from './features/productsSlice';
+import SearchBar from './components/SearchBar';
+import SortBar from './components/SortBar';
+import ReactPaginate from 'react-paginate';
 
 function App() {
   const dispatch = useDispatch();
   const { products, searchQuery, status } = useSelector((state) => state.products);
-  const [sortKey, setSortKey] = useState(''); // State for sorting
+  const [sortKey, setSortKey] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 8;
 
   useEffect(() => {
-    dispatch(fetchProducts()); // Fetch products when the component mounts
+    dispatch(fetchProducts());
   }, [dispatch]);
 
-  // Filter and sort the products based on user input
   let filteredProducts = products.filter((product) =>
     product.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -25,6 +27,13 @@ function App() {
   } else if (sortKey === 'ratingHighLow') {
     filteredProducts.sort((a, b) => b.rating.rate - a.rating.rate);
   }
+
+  const offset = currentPage * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(offset, offset + itemsPerPage);
+
+  const handlePageChange = (event) => {
+    setCurrentPage(event.selected);
+  };
 
   if (status === 'loading') {
     return <p className="text-white">Loading...</p>;
@@ -40,7 +49,7 @@ function App() {
       <SearchBar />
       <SortBar setSortKey={setSortKey} />
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
+        {paginatedProducts.map((product) => (
           <div
             key={product.id}
             className="bg-white p-4 rounded-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition duration-300"
@@ -60,6 +69,17 @@ function App() {
           </div>
         ))}
       </div>
+      <ReactPaginate
+        previousLabel={'Previous'}
+        nextLabel={'Next'}
+        pageCount={Math.ceil(filteredProducts.length / itemsPerPage)}
+        onPageChange={handlePageChange}
+        containerClassName={'pagination flex justify-center space-x-2 mt-4'}
+        previousLinkClassName={'bg-blue-500 text-white px-3 py-1 rounded-lg'}
+        nextLinkClassName={'bg-blue-500 text-white px-3 py-1 rounded-lg'}
+        disabledClassName={'opacity-50 cursor-not-allowed'}
+        activeClassName={'bg-blue-700 text-white px-3 py-1 rounded-lg'}
+      />
     </div>
   );
 }
