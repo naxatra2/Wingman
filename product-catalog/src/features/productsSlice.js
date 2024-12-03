@@ -7,17 +7,28 @@ export const fetchProducts = createAsyncThunk('products/fetchProducts', async ()
   return response.data;
 });
 
+// Async thunk to fetch categories from the API
+export const fetchCategories = createAsyncThunk('products/fetchCategories', async () => {
+  const response = await axios.get('https://fakestoreapi.com/products/categories');
+  return response.data;
+});
+
 // Products slice
 const productsSlice = createSlice({
   name: 'products',
   initialState: {
     products: [],
+    categories: [],
+    selectedCategory: '', // Default to show all categories
     searchQuery: '',
     status: 'idle', // 'idle', 'loading', 'succeeded', 'failed'
   },
   reducers: {
     setSearchQuery: (state, action) => {
       state.searchQuery = action.payload; // Update the search query
+    },
+    setSelectedCategory: (state, action) => {
+      state.selectedCategory = action.payload; // Update the selected category
     },
   },
   extraReducers: (builder) => {
@@ -31,9 +42,12 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.rejected, (state) => {
         state.status = 'failed';
+      })
+      .addCase(fetchCategories.fulfilled, (state, action) => {
+        state.categories = action.payload; // Store categories
       });
   },
 });
 
-export const { setSearchQuery } = productsSlice.actions;
+export const { setSearchQuery, setSelectedCategory } = productsSlice.actions;
 export default productsSlice.reducer;
